@@ -43,3 +43,38 @@ def DrawFigures(color = WHITE):
         pygame.draw.line(screen, color, (int(col * SQUARE_SIZE + SQUARE_SIZE), int(row * SQUARE_SIZE)), (int(col * SQUARE_SIZE), int(row * SQUARE_SIZE + SQUARE_SIZE)))
       elif board[row][col] == 2:
         pygame.draw.circle(screen, color, (int(col * SQUARE_SIZE + SQUARE_SIZE // 2), int(row * SQUARE_SIZE + SQUARE_SIZE // 2)), CIRCLE_RADIUS, CIRCLE_WIDTH)
+
+
+def isSquareAvailable(row, col):
+  return board[row][col] == 0
+
+
+def markSquare(row, col, player):
+  if isSquareAvailable(row, col):
+    board[row][col] = player
+
+
+def isBoardFull(checkBoard = board):
+  for row in range(BOARD_ROWS):
+    for col in range(BOARD_COLS):
+      if checkBoard[row][col] == 0:
+        return True
+  return False
+
+
+def checkWin(player, checkBoard = board):
+  for row in range(BOARD_ROWS):
+    if checkBoard[row][0] == player and checkBoard[row][1] == player and checkBoard[row][2] == player:
+      return True
+
+  for col in range(BOARD_COLS):
+    if checkBoard[0][col] == player and checkBoard[1][col] == player and checkBoard[2][col] == player:
+      return True
+
+  if checkBoard[0][0] == player and checkBoard[1][1] == player and checkBoard[2][2] == player:
+    return True
+
+  if checkBoard[0][2] == player and checkBoard[1][1] == player and checkBoard[2][0] == player:
+    return True
+  
+  return False
