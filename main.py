@@ -29,7 +29,7 @@ screen.fill(BLACK)
 board = np.zeros((BOARD_ROWS, BOARD_COLS))
 
 
-def Lines(color = WHITE):
+def drawLines(color = WHITE):
   for i in range(1, BOARD_ROWS):
     pygame.draw.line(screen, color, (0, SQUARE_SIZE * i), (WIDTH, SQUARE_SIZE * i), LINE_WIDTH)
     pygame.draw.line(screen, color, (SQUARE_SIZE * i, 0), (HEIGHT, SQUARE_SIZE * i), LINE_WIDTH)
@@ -78,3 +78,65 @@ def checkWin(player, checkBoard = board):
     return True
   
   return False
+
+
+def minimax(minimaxBoard, depth, isMaximizing):
+  if checkWin(2, minimaxBoard):
+    return float('inf')
+  elif checkWin(1, minimaxBoard):
+    return float('-inf')
+  elif isBoardFull(minimaxBoard):
+    return 0
+
+
+  if isMaximizing:
+    bestScore = -1000
+
+    for row in range(BOARD_ROWS):
+      for col in range(BOARD_COLS):
+        if minimaxBoard[row][col] == 0:
+          minimaxBoard[row][col] = 2
+          score = minimax(minimaxBoard, depth + 1, False)
+          minimaxBoard[row][col] = 0
+          bestScore = max(score, bestScore)
+    return bestScore
+  else:
+    bestScore = 1000
+    
+    for row in range(BOARD_ROWS):
+      for col in range(BOARD_COLS):
+        if minimaxBoard[row][col] == 0:
+          minimaxBoard[row][col] = 1
+          score = minimax(minimaxBoard, depth + 1, True)
+          minimaxBoard[row][col] = 0
+          bestScore = min(score, bestScore)
+    return bestScore
+  
+
+def bestMove():
+  bestScore = -1000
+  move = (-1, -1)
+
+  for row in range(BOARD_ROWS):
+    for col in range(BOARD_COLS):
+      if board[row][col] == 0:
+        board[row][col] == 2
+        score = minimax(board, 0, False)
+        board[row][col] == 0
+
+        if score > bestScore:
+          bestScore = score
+          move (row, col)
+
+  if move != (-1, -1):
+    markSquare(move[0], move[1], 2)
+    return True
+  return False
+
+
+def restartGame():
+  screen.fill(BLACK)
+  drawLines(WHITE)
+  for row in range(BOARD_ROWS):
+    for col in range(BOARD_COLS):
+      board[row][col] = 0
