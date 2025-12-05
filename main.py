@@ -32,15 +32,15 @@ board = np.zeros((BOARD_ROWS, BOARD_COLS))
 def drawLines(color = WHITE):
   for i in range(1, BOARD_ROWS):
     pygame.draw.line(screen, color, (0, SQUARE_SIZE * i), (WIDTH, SQUARE_SIZE * i), LINE_WIDTH)
-    pygame.draw.line(screen, color, (SQUARE_SIZE * i, 0), (HEIGHT, SQUARE_SIZE * i), LINE_WIDTH)
+    pygame.draw.line(screen, color, (SQUARE_SIZE * i, 0), (SQUARE_SIZE * i, HEIGHT), LINE_WIDTH)
 
 
-def DrawFigures(color = WHITE):
+def drawFigures(color = WHITE):
   for row in range(BOARD_ROWS):
     for col in range(BOARD_COLS):
       if board[row][col] == 1:
-        pygame.draw.line(screen, color, (int(col * SQUARE_SIZE), int(row * SQUARE_SIZE)), (int(col * SQUARE_SIZE + SQUARE_SIZE), int(row * SQUARE_SIZE + SQUARE_SIZE)))
-        pygame.draw.line(screen, color, (int(col * SQUARE_SIZE + SQUARE_SIZE), int(row * SQUARE_SIZE)), (int(col * SQUARE_SIZE), int(row * SQUARE_SIZE + SQUARE_SIZE)))
+        pygame.draw.line(screen, color, (col * SQUARE_SIZE + SQUARE_SIZE // 4, row * SQUARE_SIZE + SQUARE_SIZE // 4), (col * SQUARE_SIZE + 3 * SQUARE_SIZE // 4, row * SQUARE_SIZE + 3 * SQUARE_SIZE // 4), CROSS_WIDTH)
+        pygame.draw.line(screen, color, (col * SQUARE_SIZE + SQUARE_SIZE // 4, row * SQUARE_SIZE + 3 * SQUARE_SIZE // 4), (col * SQUARE_SIZE + 3 * SQUARE_SIZE // 4, row * SQUARE_SIZE + SQUARE_SIZE // 4), CROSS_WIDTH)
       elif board[row][col] == 2:
         pygame.draw.circle(screen, color, (int(col * SQUARE_SIZE + SQUARE_SIZE // 2), int(row * SQUARE_SIZE + SQUARE_SIZE // 2)), CIRCLE_RADIUS, CIRCLE_WIDTH)
 
@@ -50,16 +50,15 @@ def isSquareAvailable(row, col):
 
 
 def markSquare(row, col, player):
-  if isSquareAvailable(row, col):
-    board[row][col] = player
+  board[row][col] = player
 
 
 def isBoardFull(checkBoard = board):
   for row in range(BOARD_ROWS):
     for col in range(BOARD_COLS):
       if checkBoard[row][col] == 0:
-        return True
-  return False
+        return False
+  return True
 
 
 def checkWin(player, checkBoard = board):
@@ -91,7 +90,6 @@ def minimax(minimaxBoard, depth, isMaximizing):
 
   if isMaximizing:
     bestScore = -1000
-
     for row in range(BOARD_ROWS):
       for col in range(BOARD_COLS):
         if minimaxBoard[row][col] == 0:
@@ -102,7 +100,6 @@ def minimax(minimaxBoard, depth, isMaximizing):
     return bestScore
   else:
     bestScore = 1000
-    
     for row in range(BOARD_ROWS):
       for col in range(BOARD_COLS):
         if minimaxBoard[row][col] == 0:
@@ -116,17 +113,15 @@ def minimax(minimaxBoard, depth, isMaximizing):
 def bestMove():
   bestScore = -1000
   move = (-1, -1)
-
   for row in range(BOARD_ROWS):
     for col in range(BOARD_COLS):
       if board[row][col] == 0:
-        board[row][col] == 2
+        board[row][col] = 2
         score = minimax(board, 0, False)
-        board[row][col] == 0
-
+        board[row][col] = 0
         if score > bestScore:
           bestScore = score
-          move (row, col)
+          move = (row, col)
 
   if move != (-1, -1):
     markSquare(move[0], move[1], 2)
@@ -140,3 +135,56 @@ def restartGame():
   for row in range(BOARD_ROWS):
     for col in range(BOARD_COLS):
       board[row][col] = 0
+
+
+drawLines()
+
+player = 1
+gameOver = False
+
+
+while True:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      sys.exit()
+
+    if event.type == pygame.MOUSEBUTTONDOWN and not gameOver:
+      mouseX = event.pos[0] // SQUARE_SIZE
+      mouseY = event.pos[1] // SQUARE_SIZE
+
+      if isSquareAvailable(mouseY, mouseX):
+        markSquare(mouseY, mouseX, player)
+        if checkWin(player):
+          gameOver = True
+        player = player % 2 + 1
+
+      if not gameOver:
+        if bestMove():
+          if checkWin(2):
+            gameOver = True
+          player = player % 2 +1
+
+      if not gameOver:
+        if isBoardFull():
+          gameOver = True
+
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_r:
+        restartGame()
+        gameOver = False
+        player = 1
+
+  if not gameOver:
+    drawFigures()
+  else:
+    if checkWin(1):
+      drawFigures(GREEN)
+      drawLines(GREEN)
+    elif checkWin(2):
+      drawFigures(RED)
+      drawLines(RED)
+    else:
+      drawFigures(GRAY)
+      drawLines(GRAY)
+
+  pygame.display.update()
