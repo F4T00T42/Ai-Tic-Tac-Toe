@@ -12,15 +12,15 @@ GREEN = (0, 255, 0)
 GRAY = (180, 180, 180)
 
 #SIZES
-HEIGHT = 300
-WIDTH = 300
+HEIGHT = 400
+WIDTH = 400
 LINE_WIDTH = 5
-BOARD_ROWS = 3
-BOARD_COLS = 3
+BOARD_ROWS = 4
+BOARD_COLS = 4
 SQUARE_SIZE = WIDTH // BOARD_COLS
-CIRCLE_RADIUS = SQUARE_SIZE // 3
-CIRCLE_WIDTH = 15
-CROSS_WIDTH = 25
+CIRCLE_RADIUS = SQUARE_SIZE // 4
+CIRCLE_WIDTH = 10
+CROSS_WIDTH = 20
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('AI Tic Tac Toe')
@@ -63,23 +63,25 @@ def isBoardFull(checkBoard = board):
 
 def checkWin(player, checkBoard = board):
   for row in range(BOARD_ROWS):
-    if checkBoard[row][0] == player and checkBoard[row][1] == player and checkBoard[row][2] == player:
+    if checkBoard[row][0] == player and checkBoard[row][1] == player and checkBoard[row][2] == player and checkBoard[row][3] == player:
       return True
 
   for col in range(BOARD_COLS):
-    if checkBoard[0][col] == player and checkBoard[1][col] == player and checkBoard[2][col] == player:
+    if checkBoard[0][col] == player and checkBoard[1][col] == player and checkBoard[2][col] == player and checkBoard[3][col] == player:
       return True
 
-  if checkBoard[0][0] == player and checkBoard[1][1] == player and checkBoard[2][2] == player:
+  if checkBoard[0][0] == player and checkBoard[1][1] == player and checkBoard[2][2] == player and checkBoard[3][3] == player:
     return True
 
-  if checkBoard[0][2] == player and checkBoard[1][1] == player and checkBoard[2][0] == player:
+  if checkBoard[0][3] == player and checkBoard[1][2] == player and checkBoard[2][1] == player and checkBoard[3][0] == player:
     return True
-  
+
   return False
 
 
 def minimax(minimaxBoard, depth, isMaximizing):
+  if depth == 3:
+    return 0
   if checkWin(2, minimaxBoard):
     return float('inf')
   elif checkWin(1, minimaxBoard):
@@ -89,7 +91,7 @@ def minimax(minimaxBoard, depth, isMaximizing):
 
 
   if isMaximizing:
-    bestScore = -1000
+    bestScore = float('-inf')
     for row in range(BOARD_ROWS):
       for col in range(BOARD_COLS):
         if minimaxBoard[row][col] == 0:
@@ -99,7 +101,7 @@ def minimax(minimaxBoard, depth, isMaximizing):
           bestScore = max(score, bestScore)
     return bestScore
   else:
-    bestScore = 1000
+    bestScore = float('inf')
     for row in range(BOARD_ROWS):
       for col in range(BOARD_COLS):
         if minimaxBoard[row][col] == 0:
@@ -111,7 +113,7 @@ def minimax(minimaxBoard, depth, isMaximizing):
   
 
 def bestMove():
-  bestScore = -1000
+  bestScore = float('-inf')
   move = (-1, -1)
   for row in range(BOARD_ROWS):
     for col in range(BOARD_COLS):
