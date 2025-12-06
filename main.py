@@ -196,11 +196,9 @@ while True:
       sys.exit()
 
     if event.type == pygame.MOUSEBUTTONDOWN and not gameOver:
-      x, y = event.pos
-
-      dim = x // DIMENSION_SIZE
-      col = (x % DIMENSION_SIZE) // SQUARE_SIZE
-      row = y // SQUARE_SIZE
+      dim = event.pos[0] // DIMENSION_SIZE
+      col = (event.pos[0] % DIMENSION_SIZE) // SQUARE_WIDTH
+      row = event.pos[1] // SQUARE_HEIGHT
 
 
       if isSquareAvailable(dim, row, col):
@@ -209,15 +207,15 @@ while True:
           gameOver = True
         player = player % 2 + 1
 
-      if not gameOver:
-        if bestMove():
-          if checkWin(2):
-            gameOver = True
-          player = player % 2 +1
+        if not gameOver:
+          if bestMove():
+            if checkWin(2):
+              gameOver = True
+            player = player % 2 +1
 
-      if not gameOver:
-        if isBoardFull():
-          gameOver = True
+        if not gameOver:
+          if isBoardFull():
+            gameOver = True
 
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_r:
