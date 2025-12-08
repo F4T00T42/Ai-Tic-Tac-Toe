@@ -12,9 +12,9 @@ pygame.display.set_caption('AI Tic Tac Toe')
 board = Board()
 drawLines(screen)
 
-player = 1
-gameOver = False
 
+player = PLAYER
+gameOver = False
 
 while True:
   for event in pygame.event.get():
