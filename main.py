@@ -1,67 +1,43 @@
 import sys
+import math
 import pygame
 from config import *
 from board import Board
-from draw import drawLines, drawFigures
+from game import Game
+from draw import draw_3d_cube
 from ai.minimax import bestMove
 
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('AI Tic Tac Toe')
+
+# Screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("AI Cubic Solver")
 
 board = Board()
-drawLines(screen)
+game = Game(board)
+board.game = game
+
+clock = pygame.time.Clock()
 
 
-player = PLAYER
-gameOver = False
+def main():
+  running = True
 
-while True:
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      sys.exit()
+  while running:
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        running = False
+      else:
+        board.handle_event(event)
 
-    if event.type == pygame.MOUSEBUTTONDOWN and not gameOver:
-      dim = event.pos[0] // DIMENSION_SIZE
-      col = (event.pos[0] % DIMENSION_SIZE) // SQUARE_WIDTH
-      row = event.pos[1] // SQUARE_HEIGHT
+    screen.fill(BG_COLOR)
 
-      if board.isSquareAvailable(dim, row, col):
-        board.markSquare(dim, row, col, player)
-        if board.checkWin(player):
-          gameOver = True
-        player = player % 2 + 1
+    board.hovered_cell = draw_3d_cube(screen, board)
 
-        if not gameOver:
-          if bestMove(board):
-            if board.checkWin(2):
-              gameOver = True
-            player = player % 2 +1
+    pygame.display.flip()
+    clock.tick(120)
 
-        if not gameOver:
-          if board.isFull():
-            gameOver = True
+  pygame.quit()
 
-    if event.type == pygame.KEYDOWN:
-      if event.key == pygame.K_r:
-        screen.fill(BLACK)
-        board.reset()
-        drawLines(screen)
-        player = 1
-        gameOver = False
-        continue
-
-  if not gameOver:
-    drawFigures(screen, board.board)
-  else:
-    if board.checkWin(1):
-      drawFigures(screen, board.board, GREEN)
-      drawLines(screen, GREEN)
-    elif board.checkWin(2):
-      drawFigures(screen, board.board, RED)
-      drawLines(screen, RED)
-    else:
-      drawFigures(screen, board.board, GRAY)
-      drawLines(screen, GRAY)
-
-  pygame.display.update()
+if __name__ == "__main__":
+  main()
