@@ -1,24 +1,25 @@
 import pygame
 import math
 import numpy as np
+import config
 from config import BOARD_DIMENSIONS, BOARD_ROWS, BOARD_COLS
+from draw import draw_ai_list, draw_newGame_button, draw_layer_selector
 
 class Board:
   def __init__(self):
     self.board = np.zeros((BOARD_DIMENSIONS, BOARD_ROWS, BOARD_COLS))
-    self.game = None
     self.rotation_x = 0.3
     self.rotation_y = 0.5
     self.is_dragging = False
     self.last_mouse_pos = None
     self.current_layer = 1
     self.hovered_cell = None
-    # self.clicked_cells = set()
     self.current_player = 1  # 1 = human, 2 = AI
     self.celebrating = False
-    self.ai_engine = "minimax"
+    self.ai_engine = "Minimax"
     self.game_started = False
     self.engines = ["Minimax", "Alpha-Beta", "Heuristic Eval"]
+    self.ui_rect = []
 
 
   def isSquareAvailable(self, dim, row, col):
@@ -35,7 +36,16 @@ class Board:
     self.current_player = 1
     self.celebrating = False
     self.game_started = False
+    config.BG_COLOR = (170, 100, 200)
 
+  def change_layer(self, direction):
+    self.current_layer = max(
+      1,
+      min(config.BOARD_DIMENSIONS, self.current_layer + direction)
+    )
+
+  def choose_ai(self, engine_name):
+    self.ai_engine = engine_name
 
   def checkWin(self, player):
     board = self.board
@@ -102,10 +112,18 @@ class Board:
         self.ai_move()
         self.current_player = 1
 
+  def handle_ui_click(self, pos):
+    for rect, action in self.ui_rect:
+      if rect.collidepoint(pos):
+        if callable(action):
+          action(pos)
+        return True
+    return False
+
   # Event handlers
-  def handle_event(self, event):
+  def handle_event(self, event, ui_rects):
     if event.type == pygame.MOUSEBUTTONDOWN:
-      self.handle_mouse_down(event)
+      self.handle_mouse_down(event, ui_rects)
     elif event.type == pygame.MOUSEBUTTONUP:
       self.handle_mouse_up(event)
     elif event.type == pygame.MOUSEMOTION:
@@ -113,12 +131,15 @@ class Board:
     elif event.type == pygame.KEYDOWN:
       self.handle_key_down(event)
 
-  def handle_mouse_down(self, event):
-    if event.button == 1:
-      if self.hovered_cell:
+  def handle_mouse_down(self, event, ui_rects):
+    if event.button != 1:
+      return
+    else:
+      if self.handle_ui_click(event.pos):
+        return
+      elif self.hovered_cell:
         self.handle_cell_click(self.hovered_cell)
       else:
-        # Start drag rotation
         self.is_dragging = True
         self.last_mouse_pos = event.pos
 

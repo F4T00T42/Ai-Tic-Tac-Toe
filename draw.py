@@ -3,47 +3,46 @@ import math
 from utils import *
 import config
 
-def draw_layer_selector(surface, board, event=None):
+def draw_layer_selector(surface, board):
   font_size = int(config.SCREEN_WIDTH * 0.015)
   font = pygame.font.SysFont("arial", font_size, bold=True)
 
-  # Position and size
+  # Size & position
   w = config.SCREEN_WIDTH * 0.2
   h = config.SCREEN_HEIGHT * 0.06
   x = config.SCREEN_WIDTH * 0.5 - w * 0.5
   y = config.SCREEN_HEIGHT * 0.9
   arrow_w = w * 0.25
+
   arrow_color = (50, 150, 255)
   bg_color = (30, 30, 30)
 
-  # Background rectangle
-  pygame.draw.rect(surface, bg_color, (x, y, w, h), border_radius=8)
+  # Main background rect
+  main_rect = pygame.Rect(x, y, w, h)
+  pygame.draw.rect(surface, bg_color, main_rect, border_radius=8)
 
-  # Draw left arrow
+  # Left arrow
   left_rect = pygame.Rect(x + 5, y + 5, arrow_w, h - 10)
   pygame.draw.rect(surface, arrow_color, left_rect, border_radius=6)
   left_text = font.render("<", True, (255, 255, 255))
-  left_text_rect = left_text.get_rect(center=left_rect.center)
-  surface.blit(left_text, left_text_rect)
+  surface.blit(left_text, left_text.get_rect(center=left_rect.center))
 
-  # Draw right arrow
+  # Right arrow
   right_rect = pygame.Rect(x + w - arrow_w - 5, y + 5, arrow_w, h - 10)
   pygame.draw.rect(surface, arrow_color, right_rect, border_radius=6)
   right_text = font.render(">", True, (255, 255, 255))
-  right_text_rect = right_text.get_rect(center=right_rect.center)
-  surface.blit(right_text, right_text_rect)
+  surface.blit(right_text, right_text.get_rect(center=right_rect.center))
 
-  # Draw current layer
+  # Layer text
   layer_text = font.render(f"Layer: {board.current_layer}", True, (255, 255, 255))
-  layer_text_rect = layer_text.get_rect(center=(x + w // 2, y + h // 2))
-  surface.blit(layer_text, layer_text_rect)
+  surface.blit(layer_text, layer_text.get_rect(center=main_rect.center))
 
-  if event and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-    mouse_pos = event.pos
-    if left_rect.collidepoint(mouse_pos):
-      board.current_layer = max(1, board.current_layer - 1)
-    elif right_rect.collidepoint(mouse_pos):
-      board.current_layer = min(config.BOARD_DIMENSIONS, board.current_layer + 1)
+  return [
+    (right_rect, lambda pos: board.change_layer(+1)),
+    (left_rect, lambda pos: board.change_layer(-1)),
+    (main_rect, None)
+  ]
+
 
 
 def draw_newGame_button(surface, board):
@@ -53,26 +52,24 @@ def draw_newGame_button(surface, board):
   h = config.SCREEN_HEIGHT * 0.06
   x = config.SCREEN_WIDTH * 0.5 - w * 0.5
   y = config.SCREEN_HEIGHT * 0.95
+  rect = pygame.Rect(x, y, w, h)
   mouse_pos = pygame.mouse.get_pos()
 
   # Button color changes on hover
-  color = (200, 50, 50) if pygame.Rect(x, y, w, h).collidepoint(mouse_pos) else (255, 80, 80)
-  pygame.draw.rect(surface, color, (x, y, w, h), border_radius=8)
+  color = (200, 50, 50) if rect.collidepoint(mouse_pos) else (255, 80, 80)
+  pygame.draw.rect(surface, color, rect, border_radius=8)
 
   # Button text
   text_surf = font.render("New Game", True, (255, 255, 255))
-  text_rect = text_surf.get_rect(center=(x + w // 2, y + h // 2))
+  text_rect = text_surf.get_rect(center=rect.center)
   surface.blit(text_surf, text_rect)
 
-  # Handle click
-  if pygame.mouse.get_pressed()[0] and pygame.Rect(x, y, w, h).collidepoint(mouse_pos):
-    board.reset()
-
+  return [(rect, lambda _: board.reset())]
 
 def draw_ai_list(surface, board):
   # Hide the selector if the game has started
   if getattr(board, 'game_started', False):
-    return
+    return []
 
   font_size = int(config.SCREEN_WIDTH * 0.018)
   title_font = pygame.font.SysFont("arial", font_size, bold=True)
@@ -84,7 +81,7 @@ def draw_ai_list(surface, board):
   y = config.SCREEN_HEIGHT * 0.1
   h = config.SCREEN_HEIGHT * 0.06
 
-  engines = ["minimax", "random", "advanced"]
+  engines = board.engines
 
   mouse_pos = pygame.mouse.get_pos()
 
@@ -98,6 +95,8 @@ def draw_ai_list(surface, board):
   title_surf = title_font.render("AI Engines", True, (255, 255, 255))
   title_rect = title_surf.get_rect(center=(panel_rect.centerx, y - 20))
   surface.blit(title_surf, title_rect)
+
+  ui_rect = []
 
   for i, eng in enumerate(engines):
     rect = pygame.Rect(x, y + i * (h + spacing), w, h)
@@ -119,12 +118,11 @@ def draw_ai_list(surface, board):
     text_surf = item_font.render(eng.capitalize(), True, (255, 255, 255))
     text_rect = text_surf.get_rect(center=rect.center)
     surface.blit(text_surf, text_rect)
+    ui_rect.append((rect, lambda _, e=eng: board.choose_ai(e)))
 
-    if pygame.mouse.get_pressed()[0] and rect.collidepoint(mouse_pos):
-      board.ai_engine = eng
+  ui_rect.append((panel_rect, None))
 
-
-
+  return ui_rect
 
 def draw_circle_on_cell(layer_surf, cell_3d, layer_z, board, alpha=255, radius_ratio=0.18, thickness=6):
   center_x = sum(x for x, y in cell_3d) / 4
