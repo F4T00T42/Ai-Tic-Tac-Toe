@@ -21,7 +21,7 @@ def main():
   global screen
 
   while True:
-    ui_rects = []
+    board.ui_rects = []
 
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -34,13 +34,14 @@ def main():
 
       if board.celebrating:
         if event.type == pygame.MOUSEBUTTONDOWN:
-          board.is_dragging = True
-          board.last_mouse_pos = event.pos
+          if not board.handle_ui_click(event.pos):
+            board.is_dragging = True
+            board.last_mouse_pos = event.pos
         elif event.type in (pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION, pygame.KEYDOWN):
-          board.handle_event(event, ui_rects)
+          board.handle_event(event, board.ui_rects)
 
       else:
-        board.handle_event(event, ui_rects)
+        board.handle_event(event, board.ui_rects)
 
 
     screen.fill(config.BG_COLOR)
