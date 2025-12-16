@@ -1,8 +1,7 @@
-import math
 import pygame
 import config
 from board import Board
-from draw import draw_3d_cube, draw_ai_list, draw_newGame_button, draw_layer_selector
+from draw import draw_3d_cube, draw_ai_list, draw_newGame_button, draw_layer_selector, draw_ai_timer
 
 pygame.init()
 
@@ -46,12 +45,15 @@ def main():
     screen.fill(config.BG_COLOR)
 
     if board.celebrating:
-      if board.celebration_winner == config.PLAYER:
+      if celebration_winner == config.PLAYER:
         config.BG_COLOR = (30, 180, 30)
         message = "YOU WIN!"
-      else:
+      elif celebration_winner == config.AI:
         config.BG_COLOR = (180, 30, 30)
         message = "AI WINS!"
+      else:
+        config.BG_COLOR = (130, 130, 130)
+        message = "TIE!"
 
       # Celebration message
       font = pygame.font.SysFont("arial", 48, bold=True)
@@ -62,10 +64,10 @@ def main():
     else:
       if board.checkWin(config.PLAYER):
         board.celebrating = True
-        board.celebration_winner = config.PLAYER
+        celebration_winner = config.PLAYER
       elif board.checkWin(config.AI):
         board.celebrating = True
-        board.celebration_winner = config.AI
+        celebration_winner = config.AI
 
     board.hovered_cell = draw_3d_cube(screen, board)
 
@@ -73,6 +75,7 @@ def main():
     board.ui_rect += draw_newGame_button(screen, board)
     board.ui_rect += draw_layer_selector(screen, board)
     board.ui_rect += draw_ai_list(screen, board)
+    board.ui_rect += draw_ai_timer(screen, board, board.ai_timer)
 
     pygame.display.flip()
     clock.tick(60)

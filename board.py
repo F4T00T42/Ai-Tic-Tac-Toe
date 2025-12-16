@@ -1,12 +1,13 @@
 import pygame
 import math
+import time
 import numpy as np
 import config
 from config import BOARD_DIMENSIONS, BOARD_ROWS, BOARD_COLS
-from draw import draw_ai_list, draw_newGame_button, draw_layer_selector
-from ai.minimax import move as minimax_move
-from ai.alphabeta import move as alphabeta_move
-# from ai.heuristic import move as heuristic_move
+from ai.minimax import move as minimax_move, minimax, minimaxTBE, minimaxPOS
+from ai.alphabeta import move as alphabeta_move, alphabeta, alphabetaTBE, alphabetaPOS
+from win_lines import generate_winning_lines
+from win_lines import compute_positional_weights
 
 
 class Board:
@@ -18,15 +19,21 @@ class Board:
     self.last_mouse_pos = None
     self.current_layer = 1
     self.hovered_cell = None
-    self.current_player = 1  # 1 = human, 2 = AI
+    self.current_player = config.PLAYER
     self.celebrating = False
-    self.ai_engine = "Alpha-Beta"
+    self.ai_engine = "Minimax"
     self.game_started = False
+    self.ai_timer = 0.00
     self.ui_rect = []
+    self.win_lines = generate_winning_lines(BOARD_DIMENSIONS)
+    self.POSITIONAL_WEIGHTS = compute_positional_weights(self.win_lines)
     self.engines = {
-    "Minimax": minimax_move,
-    "Alpha-Beta": alphabeta_move,
-    # "Heuristic Eval": heuristic_move
+    "Minimax": minimax_move(minimax),
+    "Threat-based\nHeuristic Eval(MM)": minimax_move(minimaxTBE),
+    "   Positional\nHeuristic Eval(MM)": minimax_move(minimaxPOS),
+    "Alpha-Beta": alphabeta_move(alphabeta),
+    "Threat-based\nHeuristic Eval(AB)": alphabeta_move(alphabetaTBE),
+    "   Positional\nHeuristic Eval(AB)": alphabeta_move(alphabetaPOS)
     }
 
 
@@ -43,7 +50,7 @@ class Board:
 
   def reset(self):
     self.board.fill(0)
-    self.current_player = 1
+    self.current_player = config.PLAYER
     self.celebrating = False
     self.game_started = False
     config.BG_COLOR = (170, 100, 200)
@@ -53,58 +60,22 @@ class Board:
       1,
       min(config.BOARD_DIMENSIONS, self.current_layer + direction)
     )
+    # print(self.win_lines)
 
   def choose_ai(self, engine_name):
     self.ai_engine = engine_name
 
   def checkWin(self, player):
-    b = self.board  # shape = (D, R, C)
-    D, R, C = b.shape
-    d_idx = np.arange(D)
-
-    # 1. Check all rows in each layer
-    if np.any(np.all(b == player, axis=2)):
+    b = self.board
+    for line in self.win_lines:
+      if all(b[d, r, c] == player for d, r, c in line):
         return True
-
-    # 2. Check all columns in each layer
-    if np.any(np.all(b == player, axis=1)):
-        return True
-    
-    # 3. Check diagonals in each layer
-    diag1 = np.array([np.diag(b[dim]) for dim in range(D)])
-    diag2 = np.array([np.diag(np.fliplr(b[dim])) for dim in range(D)])
-    if np.any(np.all(diag1 == player, axis=1)) or np.any(np.all(diag2 == player, axis=1)):
-        return True
-
-    # 4. Check verticals (through layers)
-    if np.any(np.all(b == player, axis=0)):
-        return True
-
-    # 5. 3D diagonals
-    if (
-        np.all(b[d_idx, d_idx, d_idx] == player) or  # main 3D diagonal
-        np.all(b[d_idx, d_idx, R-1-d_idx] == player) or
-        np.all(b[d_idx, C-1-d_idx, d_idx] == player) or
-        np.all(b[R-1-d_idx, d_idx, d_idx] == player)
-    ):
-        return True
-
-    # Column diagonals across layers
-    col_diag1 = np.all(b[d_idx, d_idx, :] == player, axis=0)        # ascending row
-    col_diag2 = np.all(b[d_idx, R-1-d_idx, :] == player, axis=0)    # descending row
-    if np.any(col_diag1) or np.any(col_diag2):
-        return True
-
-    # Row diagonals across layers
-    row_diag1 = np.all(b[d_idx, :, d_idx] == player, axis=0)        # ascending column
-    row_diag2 = np.all(b[d_idx, :, C-1-d_idx] == player, axis=0)    # descending column
-    if np.any(row_diag1) or np.any(row_diag2):
-      return True
-
     return False
 
   def ai_move(self):
+    start = time.perf_counter()
     self.engines[self.ai_engine](self)
+    return time.perf_counter() - start
 
   # Handles player move on a cell
   def handle_cell_click(self, cell):
@@ -112,15 +83,15 @@ class Board:
       return
 
     #To hide the ai list
-    self.game_started = True
+    # self.game_started = True
 
     dim, row, col = cell
     if self.isSquareAvailable(dim, row, col):
-      self.markSquare(dim, row, col, 1)  # Human = 1
-      if not self.checkWin(1) and not self.isFull():
-        self.current_player = 2
-        self.ai_move()
-        self.current_player = 1
+      self.markSquare(dim, row, col, self.current_player)
+      if not self.checkWin(self.current_player) and not self.isFull():
+        self.current_player = config.AI
+        self.ai_timer = self.ai_move()
+        self.current_player = config.PLAYER
 
   def handle_ui_click(self, pos):
     for rect, action in self.ui_rect:

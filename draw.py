@@ -2,6 +2,27 @@ import pygame
 import math
 from utils import *
 import config
+from board import Board
+
+def draw_ai_timer(surface, board, timer):
+  font_size = int(config.SCREEN_WIDTH * 0.015)
+  font = pygame.font.SysFont("arial", font_size, bold=True)
+
+  # Size & position
+  w = config.SCREEN_WIDTH * 0.18
+  h = config.SCREEN_HEIGHT * 0.06
+  x = config.SCREEN_WIDTH * 0.98 - w
+  y = config.SCREEN_HEIGHT * 0.1
+
+  # Main background rect
+  main_rect = pygame.Rect(x, y, w, h)
+  pygame.draw.rect(surface, config.layer_select_bg_color, main_rect, border_radius=8)
+  pygame.draw.rect(surface, config.panel_border_color, main_rect, 2, border_radius=8)
+
+  layer_text = font.render(f"AI Move Time: {timer:.2f}s", True, (255, 255, 255))
+  surface.blit(layer_text, layer_text.get_rect(center=main_rect.center))
+
+  return [(main_rect, None)]
 
 def draw_layer_selector(surface, board):
   font_size = int(config.SCREEN_WIDTH * 0.015)
@@ -9,27 +30,24 @@ def draw_layer_selector(surface, board):
 
   # Size & position
   w = config.SCREEN_WIDTH * 0.2
-  h = config.SCREEN_HEIGHT * 0.06
+  h = config.SCREEN_HEIGHT * 0.05
   x = config.SCREEN_WIDTH * 0.5 - w * 0.5
-  y = config.SCREEN_HEIGHT * 0.9
+  y = config.SCREEN_HEIGHT * 0.89
   arrow_w = w * 0.25
-
-  arrow_color = (50, 150, 255)
-  bg_color = (30, 30, 30)
 
   # Main background rect
   main_rect = pygame.Rect(x, y, w, h)
-  pygame.draw.rect(surface, bg_color, main_rect, border_radius=8)
+  pygame.draw.rect(surface, config.layer_select_bg_color, main_rect, border_radius=8)
 
   # Left arrow
   left_rect = pygame.Rect(x + 5, y + 5, arrow_w, h - 10)
-  pygame.draw.rect(surface, arrow_color, left_rect, border_radius=6)
+  pygame.draw.rect(surface, config.layer_select_arrow_color, left_rect, border_radius=6)
   left_text = font.render("<", True, (255, 255, 255))
   surface.blit(left_text, left_text.get_rect(center=left_rect.center))
 
   # Right arrow
   right_rect = pygame.Rect(x + w - arrow_w - 5, y + 5, arrow_w, h - 10)
-  pygame.draw.rect(surface, arrow_color, right_rect, border_radius=6)
+  pygame.draw.rect(surface, config.layer_select_arrow_color, right_rect, border_radius=6)
   right_text = font.render(">", True, (255, 255, 255))
   surface.blit(right_text, right_text.get_rect(center=right_rect.center))
 
@@ -49,15 +67,14 @@ def draw_newGame_button(surface, board):
   font_size = int(config.SCREEN_WIDTH * 0.015)
   font = pygame.font.SysFont("arial", font_size, bold=True)
   w = config.SCREEN_WIDTH * 0.1
-  h = config.SCREEN_HEIGHT * 0.06
+  h = config.SCREEN_HEIGHT * 0.05
   x = config.SCREEN_WIDTH * 0.5 - w * 0.5
-  y = config.SCREEN_HEIGHT * 0.95
+  y = config.SCREEN_HEIGHT * 0.94
   rect = pygame.Rect(x, y, w, h)
   mouse_pos = pygame.mouse.get_pos()
 
-  # Button color changes on hover
-  color = (200, 50, 50) if rect.collidepoint(mouse_pos) else (255, 80, 80)
-  pygame.draw.rect(surface, color, rect, border_radius=8)
+  # Button color
+  pygame.draw.rect(surface, config.new_game_color, rect, border_radius=8)
 
   # Button text
   text_surf = font.render("New Game", True, (255, 255, 255))
@@ -77,9 +94,9 @@ def draw_ai_list(surface, board):
 
   w = config.SCREEN_WIDTH * 0.18
   spacing = config.SCREEN_HEIGHT * 0.015
-  x = config.SCREEN_WIDTH - w - config.SCREEN_WIDTH * 0.02
-  y = config.SCREEN_HEIGHT * 0.1
-  h = config.SCREEN_HEIGHT * 0.06
+  x = config.SCREEN_WIDTH * 0.98 - w
+  y = config.SCREEN_HEIGHT * 0.25
+  h = config.SCREEN_HEIGHT * 0.09
 
   engines = board.engines
 
@@ -88,8 +105,8 @@ def draw_ai_list(surface, board):
   # Panel background
   panel_height = len(engines) * (h + spacing) + 50
   panel_rect = pygame.Rect(x - 10, y - 40, w + 20, panel_height)
-  pygame.draw.rect(surface, (50, 50, 50), panel_rect, border_radius=14)
-  pygame.draw.rect(surface, (255, 255, 255), panel_rect, 2, border_radius=14)
+  pygame.draw.rect(surface, config.panel_color, panel_rect, border_radius=14)
+  pygame.draw.rect(surface, config.panel_border_color, panel_rect, 2, border_radius=14)
 
   # Panel title
   title_surf = title_font.render("AI Engines", True, (255, 255, 255))
@@ -101,21 +118,17 @@ def draw_ai_list(surface, board):
   for i, eng in enumerate(engines):
     rect = pygame.Rect(x, y + i * (h + spacing), w, h)
 
-    base_color = (60, 60, 60)
-    hover_color = (100, 100, 220)
-    selected_color = (30, 200, 30)
-
     if eng == board.ai_engine:
-      color = selected_color
+      color = config.ai_items_selected_color
     elif rect.collidepoint(mouse_pos):
-      color = hover_color
+      color = config.ai_items_hover_color
     else:
-      color = base_color
+      color = config.ai_items_base_color
 
     pygame.draw.rect(surface, color, rect, border_radius=10)
     pygame.draw.rect(surface, (255, 255, 255), rect, 2, border_radius=10)
 
-    text_surf = item_font.render(eng.capitalize(), True, (255, 255, 255))
+    text_surf = item_font.render(eng, True, (255, 255, 255))
     text_rect = text_surf.get_rect(center=rect.center)
     surface.blit(text_surf, text_rect)
     ui_rect.append((rect, lambda _, e=eng: board.choose_ai(e)))
@@ -253,11 +266,11 @@ def draw_3d_cube(surface, board):
       dim, row, col = ident
       value = board.board[dim][row][col]
       if value == 1:  # player
-        pygame.draw.polygon(layer_surf, (0, 0, 255, 255 if layer_num == board.current_layer else alpha), poly)
+        pygame.draw.polygon(layer_surf, (*config.CELL_PLAYER_COLOR, alpha), poly)
         draw_cross_on_cell(layer_surf, cell["poly_3d"], layer_z, board, alpha=alpha)
         pygame.draw.polygon(layer_surf, (*config.CELL_BORDER, alpha), poly, 1)
       elif value == 2:  # AI
-        pygame.draw.polygon(layer_surf, (150, 0, 0, 255 if layer_num == board.current_layer else alpha), poly)
+        pygame.draw.polygon(layer_surf, (*config.CELL_AI_COLOR, alpha), poly)
         draw_circle_on_cell(layer_surf, cell["poly_3d"], layer_z, board, alpha=alpha)
         pygame.draw.polygon(layer_surf, (*config.CELL_BORDER, alpha), poly, 1)
 
