@@ -4,6 +4,10 @@ import numpy as np
 import config
 from config import BOARD_DIMENSIONS, BOARD_ROWS, BOARD_COLS
 from draw import draw_ai_list, draw_newGame_button, draw_layer_selector
+from ai.minimax import move as minimax_move
+from ai.alphabeta import move as alphabeta_move
+# from ai.heuristic import move as heuristic_move
+
 
 class Board:
   def __init__(self):
@@ -16,10 +20,16 @@ class Board:
     self.hovered_cell = None
     self.current_player = 1  # 1 = human, 2 = AI
     self.celebrating = False
-    self.ai_engine = "Minimax"
+    self.ai_engine = "Alpha-Beta"
     self.game_started = False
-    self.engines = ["Minimax", "Alpha-Beta", "Heuristic Eval"]
     self.ui_rect = []
+    self.engines = {
+    "Minimax": minimax_move,
+    "Alpha-Beta": alphabeta_move,
+    # "Heuristic Eval": heuristic_move
+    }
+
+
 
 
   def isSquareAvailable(self, dim, row, col):
@@ -48,60 +58,60 @@ class Board:
     self.ai_engine = engine_name
 
   def checkWin(self, player):
-    board = self.board
-    D, R, C = BOARD_DIMENSIONS, BOARD_ROWS, BOARD_COLS
+    b = self.board  # shape = (D, R, C)
+    D, R, C = b.shape
+    d_idx = np.arange(D)
 
-    for dim in range(D):
-      for row in range(R):
-        if all(board[dim][row] == player):
-          return True
-
-      for col in range(C):
-        if all(board[dim][:, col] == player):
-          return True
-
-      if all(board[dim][i][i] == player for i in range(R)):
-        return True
-      if all(board[dim][i][R - 1 - i] == player for i in range(R)):
+    # 1. Check all rows in each layer
+    if np.any(np.all(b == player, axis=2)):
         return True
 
-    for row in range(R):
-      for col in range(C):
-          if all(board[dim][row][col] == player for dim in range(D)):
-            return True
-
-    for row in range(R):
-      if all(board[dim][row][dim] == player for dim in range(D)):
+    # 2. Check all columns in each layer
+    if np.any(np.all(b == player, axis=1)):
         return True
-      if all(board[dim][row][R - 1 - dim] == player for dim in range(D)):
-        return True
-
-    for col in range(C):
-      if all(board[dim][dim][col] == player for dim in range(D)):
-        return True
-      if all(board[dim][C - 1 - dim][col] == player for dim in range(D)):
+    
+    # 3. Check diagonals in each layer
+    diag1 = np.array([np.diag(b[dim]) for dim in range(D)])
+    diag2 = np.array([np.diag(np.fliplr(b[dim])) for dim in range(D)])
+    if np.any(np.all(diag1 == player, axis=1)) or np.any(np.all(diag2 == player, axis=1)):
         return True
 
-    if all(board[dim][dim][dim] == player for dim in range(D)):
-      return True
-    if all(board[dim][dim][R - 1 - dim] == player for dim in range(D)):
-      return True
-    if all(board[dim][C - 1 - dim][dim] == player for dim in range(D)):
-      return True
-    if all(board[dim][dim][R - 1 - dim] == player for dim in range(D)):
+    # 4. Check verticals (through layers)
+    if np.any(np.all(b == player, axis=0)):
+        return True
+
+    # 5. 3D diagonals
+    if (
+        np.all(b[d_idx, d_idx, d_idx] == player) or  # main 3D diagonal
+        np.all(b[d_idx, d_idx, R-1-d_idx] == player) or
+        np.all(b[d_idx, C-1-d_idx, d_idx] == player) or
+        np.all(b[R-1-d_idx, d_idx, d_idx] == player)
+    ):
+        return True
+
+    # Column diagonals across layers
+    col_diag1 = np.all(b[d_idx, d_idx, :] == player, axis=0)        # ascending row
+    col_diag2 = np.all(b[d_idx, R-1-d_idx, :] == player, axis=0)    # descending row
+    if np.any(col_diag1) or np.any(col_diag2):
+        return True
+
+    # Row diagonals across layers
+    row_diag1 = np.all(b[d_idx, :, d_idx] == player, axis=0)        # ascending column
+    row_diag2 = np.all(b[d_idx, :, C-1-d_idx] == player, axis=0)    # descending column
+    if np.any(row_diag1) or np.any(row_diag2):
       return True
 
     return False
 
   def ai_move(self):
-    from ai.minimax import bestMove
-    bestMove(self)
+    self.engines[self.ai_engine](self)
 
   # Handles player move on a cell
   def handle_cell_click(self, cell):
     if not cell:
       return
 
+    #To hide the ai list
     self.game_started = True
 
     dim, row, col = cell

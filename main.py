@@ -3,7 +3,6 @@ import pygame
 import config
 from board import Board
 from draw import draw_3d_cube, draw_ai_list, draw_newGame_button, draw_layer_selector
-from ai.minimax import bestMove
 
 pygame.init()
 

@@ -1,4 +1,3 @@
-import numpy as np
 from config import maxDepth, PLAYER, AI
 
 def minimax(board, depth, isMaximizing, player = PLAYER, ai = AI):
@@ -35,7 +34,7 @@ def minimax(board, depth, isMaximizing, player = PLAYER, ai = AI):
     return bestScore
   
 
-def bestMove(board):
+def move(board):
   b = board.board
 
   bestScore = float('-inf')
