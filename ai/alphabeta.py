@@ -1,6 +1,9 @@
 import numpy as np
 from config import maxDepth, PLAYER, AI
 import ai.heuristicEval as hv
+from ai.symmetry import canonical
+
+TT = {}
 
 def move(alphabeta_fn):
   def engine(board):
@@ -34,6 +37,11 @@ def alphabeta(board, depth, isMaximizing, alpha, beta, empty_cells, player = PLA
   if not len(empty_cells) or depth == maxDepth:
     return 0
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -68,6 +76,11 @@ def alphabetaPOS(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
   if not len(empty_cells) or depth == maxDepth:
     return hv.positional_based_eval(board)
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -80,6 +93,9 @@ def alphabetaPOS(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
       alpha = max(alpha, score)
       if beta <= alpha:
         break  # PRUNE
+
+    if key is not None:
+      TT[key] = score
     return score
   else:
     score = np.inf
@@ -92,6 +108,9 @@ def alphabetaPOS(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
       beta = min(beta, score)
       if beta <= alpha:
         break
+    
+    if key is not None:
+      TT[key] = score
     return score
 
 def alphabetaTBE(board, depth, isMaximizing, alpha, beta, empty_cells, player = PLAYER, ai = AI):
@@ -102,6 +121,11 @@ def alphabetaTBE(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
   if not len(empty_cells) or depth == maxDepth:
     return hv.threat_based_eval(board)
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -114,6 +138,9 @@ def alphabetaTBE(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
       alpha = max(alpha, score)
       if beta <= alpha:
         break  # PRUNE
+
+    if key is not None:
+      TT[key] = score
     return score
   else:
     score = np.inf
@@ -126,4 +153,7 @@ def alphabetaTBE(board, depth, isMaximizing, alpha, beta, empty_cells, player = 
       beta = min(beta, score)
       if beta <= alpha:
         break
+
+    if key is not None:
+      TT[key] = score
     return score

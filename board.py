@@ -147,4 +147,3 @@ class Board:
       self.current_layer = min(BOARD_DIMENSIONS, self.current_layer + 1)
     elif event.key == pygame.K_r:
       self.reset()
-      self.celebrating = False

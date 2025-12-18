@@ -1,6 +1,9 @@
 import numpy as np
 from config import maxDepth, PLAYER, AI
 import ai.heuristicEval as hv
+from ai.symmetry import canonical
+
+TT = {}
 
 def move(minimax_fn):
   def engine(board):
@@ -27,13 +30,19 @@ def move(minimax_fn):
 
 
 def minimax(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI):
+  # TERMINAL CHECKS
   if board.checkWin(player):
-    return -np.inf + depth
+      return -np.inf + depth
   if board.checkWin(ai):
-    return np.inf - depth
+      return np.inf - depth
   if board.isFull() or depth == maxDepth:
-        return 0
+      return 0
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -42,6 +51,8 @@ def minimax(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI):
       next_empty = np.delete(empty_cells, i, axis=0)
       score = max(score, minimax(board, depth + 1, False, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
   else:
     score = np.inf
@@ -50,6 +61,8 @@ def minimax(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI):
       next_empty = np.delete(empty_cells, i, axis=0)
       score = min(score, minimax(board, depth + 1, True, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
 
 def minimaxPOS(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI):
@@ -60,6 +73,11 @@ def minimaxPOS(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
   if board.isFull() or depth == maxDepth:
         return hv.positional_based_eval(board)
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -68,6 +86,8 @@ def minimaxPOS(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
       next_empty = np.delete(empty_cells, i, axis=0)
       score = max(score, minimaxPOS(board, depth + 1, False, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
   else:
     score = np.inf
@@ -76,6 +96,8 @@ def minimaxPOS(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
       next_empty = np.delete(empty_cells, i, axis=0)
       score = min(score, minimaxPOS(board, depth + 1, True, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
 
 def minimaxTBE(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI):
@@ -86,6 +108,11 @@ def minimaxTBE(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
   if board.isFull() or depth == maxDepth:
         return hv.threat_based_eval(board)
 
+  key = None
+  if depth <= 3:
+    key = (canonical(board.board), maxDepth - depth, isMaximizing)
+    if key in TT:
+      return TT[key]
 
   if isMaximizing:
     score = -np.inf
@@ -94,6 +121,8 @@ def minimaxTBE(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
       next_empty = np.delete(empty_cells, i, axis=0)
       score = max(score, minimaxTBE(board, depth + 1, False, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
   else:
     score = np.inf
@@ -102,4 +131,6 @@ def minimaxTBE(board, depth, isMaximizing, empty_cells, player = PLAYER, ai = AI
       next_empty = np.delete(empty_cells, i, axis=0)
       score = min(score, minimaxTBE(board, depth + 1, True, next_empty))
       board.board[d, r, c] = 0
+    if key is not None:
+      TT[key] = score
     return score
