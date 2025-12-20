@@ -7,7 +7,7 @@ A Python-based 3D Tic Tac Toe game powered by **Pygame** with an AI opponent usi
 ## Features
 
 * **3D 4×4×4 Board:** Play on four stacked layers with 4×4 grids each.
-* **AI Opponent:** Challenge the computer using the Minimax algorithm.
+* **AI Opponent:** Challenge the computer using the Minimax, Alpha-Beta pruning or 2 Heuristic function algorithms.
 * **Interactive GUI:** Click to place your mark; the AI responds immediately.
 * **Win Detection:** Detects horizontal, vertical, diagonal, and cross-dimensional wins.
 * **Restart Option:** Reset the game anytime by pressing `R`.
@@ -75,10 +75,15 @@ Ai-Tic-Tac-Toe/
 │
 ├── board.py                 # Board class: state, move placement, resets, win logic
 ├── draw.py                  # Rendering: grid, shapes, colors, endgame effects
-├── constants.py             # All configuration values: sizes, colors, dimensions
+├── config.py                # All configuration values: sizes, colors, dimensions
+├── utils.py                 # Board utilities: 3d or 2d projection function, rotate function 
+├── win_lines.py             # All win conditions: win conditions and cells.
 │
-├── ai/
-│   └── minimax.py           # AI engine (Minimax + evaluation heuristics)
+├── ai/                      # AI engines (Minimax, Alpha-Beta, evaluation heuristics)
+│   └── alphabeta.py
+│   └── heuristicEval.py
+│   └── minimax.py
+│   └── symmetry.py
 │
 └── README.md                # Project documentation
 ```
