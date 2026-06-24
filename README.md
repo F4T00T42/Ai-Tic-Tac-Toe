@@ -1,97 +1,85 @@
-# AI 3D Tic Tac Toe
-
-A Python-based 3D Tic Tac Toe game powered by **Pygame** with an AI opponent using the **Minimax algorithm**. The game features a 4×4×4 3D board, real-time graphics, and smart AI moves.
-
----
-
+# AI Cubic Solver — 3D Tic-Tac-Toe (4×4×4)
+​
+A three-dimensional Tic-Tac-Toe game (a 4×4×4 cube) built with **Pygame**, featuring
+multiple search-based AI opponents (Minimax and Alpha-Beta pruning, with optional
+heuristic evaluation for deeper, faster play).
+​
+You win by getting **four in a row** along *any* straight line through the cube —
+rows, columns, vertical pillars, and the planar and space diagonals.
+​
 ## Features
-
-* **3D 4×4×4 Board:** Play on four stacked layers with 4×4 grids each.
-* **AI Opponent:** Challenge the computer using the Minimax, Alpha-Beta pruning or 2 Heuristic function algorithms.
-* **Interactive GUI:** Click to place your mark; the AI responds immediately.
-* **Win Detection:** Detects horizontal, vertical, diagonal, and cross-dimensional wins.
-* **Restart Option:** Reset the game anytime by pressing `R`.
-* **Color-coded End Game:**
-
-  * Green for player win
-  * Red for AI win
-  * Gray for a tie
-
----
-
+​
+- Full 4×4×4 board rendered as four stacked 4×4 layers.
+- Six selectable AI engines:
+  - **Minimax** — exhaustive search to a fixed depth.
+  - **Alpha-Beta** — Minimax with alpha-beta pruning (same result, faster).
+  - **Heuristic variants** of both, which use a position evaluator (`ai/heuristicEval.py`)
+    to score non-terminal nodes so the AI can "look ahead" without searching the
+    full game tree.
+- Board symmetry reduction (`ai/symmetry.py`) to prune equivalent positions.
+- Restart at any time, plus a **New Game** button.
+​
 ## Requirements
-
-* Python **3.8 – 3.13** (Pygame does not officially support Python 3.14 yet)
-* [Pygame](https://www.pygame.org/news)
-* [NumPy](https://numpy.org/)
-
-**Tip:** To check which Python versions your Pygame supports, run:
-
+​
+- Python 3.8–3.13
+- `pygame`
+​
+## Installation & Run
+​
 ```bash
-python -m pip show pygame
+git clone https://github.com/F4T00T42/Ai-Tic-Tac-Toe.git
+cd Ai-Tic-Tac-Toe
+pip install -r requirements.txt   # or: pip install pygame
+python main.py
 ```
-
-Or visit the [Pygame release page](https://github.com/pygame/pygame/releases) to see version compatibility.
-
----
-
-Install dependencies via pip:
-
-```bash
-pip install pygame numpy
+​
+## Controls
+​
+- **Click** a cell to place your mark.
+- **R** — restart the current game.
+- **New Game** button — start over.
+- Pick the AI engine from the in-game selection.
+​
+## Configuration (`config.py`)
+​
+| Setting              | Default | Meaning                                              |
+| -------------------- | ------- | ---------------------------------------------------- |
+| `BOARD_DIMENSIONS`   | `4`     | Cube size (4×4×4).                                    |
+| `ROWS` / `COLS`      | `4`     | Derived board dimensions.                            |
+| `PLAYER`             | `1`     | Human player marker.                                 |
+| `AI`                 | `2`     | AI player marker.                                    |
+| `maxDepth`           | `1`     | AI search depth. **Default is intentionally shallow** for instant moves — increase it (e.g. 2–3) for a much stronger but slower opponent. |
+​
+> **Tip:** Because the branching factor of a 64-cell board is large, raising
+> `maxDepth` significantly increases think time. The Alpha-Beta and heuristic
+> engines scale to higher depths far better than plain Minimax.
+​
+## Project Structure
+​
 ```
-
----
-
-## How to Play
-
-1. Run the game:
-
-```bash
-python tic_tac_toe_3d.py
+main.py              # Entry point; window setup ("AI Cubic Solver") and game loop
+board.py             # Board state + the six AI engine implementations
+config.py            # Board dimensions, player markers, search depth
+win_lines.py         # Precomputed set of all winning lines through the cube
+draw.py              # Pygame rendering (layers, marks, UI)
+utils.py             # Shared helpers
+ai/
+  minimax.py         # Minimax search
+  alphabeta.py       # Alpha-Beta pruning search
+  heuristicEval.py   # Position evaluation (threat counting) for heuristic engines
+  symmetry.py        # Symmetry-based pruning of equivalent positions
 ```
-
-2. Click on a square to place your mark (Player 1).
-3. The AI (Player 2) will automatically make its move.
-4. Watch for a win or tie.
-5. Press `R` to restart the game at any time.
-
----
-
-## Game Rules
-
-* Players alternate turns placing X (player) or O (AI) on any available square.
-* The goal is to get **four in a row**: horizontally, vertically, diagonally, or across dimensions.
-* The game ends when either player wins or the board is full (tie).
-
----
-
-## File Structure
-
-```
-Ai-Tic-Tac-Toe/
-│
-├── main.py                  # Game loop, input handling, and overall control
-│
-├── board.py                 # Board class: state, move placement, resets, win logic
-├── draw.py                  # Rendering: grid, shapes, colors, endgame effects
-├── config.py                # All configuration values: sizes, colors, dimensions
-├── utils.py                 # Board utilities: 3d or 2d projection function, rotate function 
-├── win_lines.py             # All win conditions: win conditions and cells.
-│
-├── ai/                      # AI engines (Minimax, Alpha-Beta, evaluation heuristics)
-│   └── alphabeta.py
-│   └── heuristicEval.py
-│   └── minimax.py
-│   └── symmetry.py
-│
-└── README.md                # Project documentation
-```
-
----
-
-## Customization
-
-* **Board Size:** Change `BOARD_DIMENSIONS`, `BOARD_ROWS`, and `BOARD_COLS` in the code.
-* **AI Difficulty:** Adjust `maxDepth` to make AI smarter (higher values = stronger AI, slower performance).
-* **Colors & UI:** Modify RGB values and line widths for a personalized look.
+​
+## Known Issues / Notes
+​
+- `ai/minimax.py` and `ai/alphabeta.py` contain leftover debug `print()` calls
+  that log to the console during AI turns. Remove them for clean output.
+- **Coordinate-ordering inconsistency in `ai/heuristicEval.py`:** `count_threats`
+  iterates coordinates as `(x, y, z)` but indexes `board.board[z][y][x]`, while
+  `threat_based_eval` unpacks the same coordinates as `(z, y, x)`. If you tune the
+  heuristic, verify the axis ordering is consistent.
+​
+## License
+​
+MIT
+​
